@@ -47,8 +47,7 @@ async function streamGenerateContent(userQuery) {
       }
 
       // formatter la réponse retournée de Gemini
-      responseData.trim('"');
-      return responseData.join(',');
+      return responseData.join(' ');
 
     } catch (error) {
       console.error('An error occurred during content generation:', error);
