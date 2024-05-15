@@ -13,7 +13,7 @@ const vertexAiOptions = { project: PROJECT_ID, location: LOCATION };
 const vertex_ai = new VertexAI(vertexAiOptions);
 
 // Define model names as constants to avoid magic strings and improve readability.
-const GEMINI_PRO_MODEL_NAME = 'gemini-pro';
+const GEMINI_PRO_MODEL_NAME = 'gemini-1.0-pro';
 
 // Safety settings can be moved outside of the model instantiation,
 // if they are static and reused across multiple instances.
@@ -32,22 +32,24 @@ const generativeModelOptions = {
 const generativeModel = vertex_ai.preview.getGenerativeModel(generativeModelOptions);
 // The streamGenerateContent function does not need to be an async declaration since it returns a Promise implicitly.
 async function streamGenerateContent(userQuery) {
-    const request = {
-      contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-    };
+    // const request = {
+    //   contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+    // };
 
     try {
-      const streamingResp = await generativeModel.generateContentStream(request);
-      const responseData = [];
-
-      for await (const item of streamingResp.stream) {
-        if (item.candidates[0].content.parts && item.candidates[0].content.parts.length > 0) {
-          responseData.push(item.candidates[0].content.parts[0].text);
-        }
-      }
-
+    //   const streamingResp = await generativeModel.generateContentStream(request);
+      //const responseData = [];
+      const chat = generativeModel.startChat({});
+    //   for await (const item of streamingResp.stream) {
+    //     if (item.candidates[0].content.parts && item.candidates[0].content.parts.length > 0) {
+    //       responseData.push(item.candidates[0].content.parts[0].text);
+    //     }
+    //   }
+    const result1 = await chat.sendMessage(userQuery);
+    const responseData = await result1.response.candidates[0].content.parts[0].text;
       // formatter la réponse retournée de Gemini
-      return responseData.join(' ');
+      return responseData
+    //   return responseData.join(' ');
 
     } catch (error) {
       console.error('An error occurred during content generation:', error);

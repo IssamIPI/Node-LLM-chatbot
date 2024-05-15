@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('data').textContent = 'Error fetching data';
       }
     };
-    fetchData('Introduct yourself and ask if i have any questions for you')
+    fetchData('Introduce yourself and ask if i have any questions for you')
   
     // Example to handle a form or button to pass a user query
     const form = document.getElementById('queryForm');
