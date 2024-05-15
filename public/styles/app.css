@@ -24,6 +24,9 @@ body {
     border-radius: 10px;
     height: 100%;
     overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
 }
 
 .app_api-request {
@@ -40,15 +43,49 @@ body {
     border-radius: 10px;
     padding: 1em;
     border: 1px solid lightgrey;
+    background: transparent;
 }
 .app_api-request button {
     padding: 1em 1.5em;
     border-radius: 10px;
     border: none;
+    cursor: pointer;
     background: #478747;
     color: whitesmoke;
-    width: fit-content;
 }
 .app_api-request button:hover {
     background: #306630;
+}
+
+.app_api-request--loading {
+    cursor: not-allowed;
+}
+.app_api-request--loading input {
+    background: #b9b9b9;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+.app_api-request--loading button {
+    background: #6b6b6b;
+    cursor: wait;
+    pointer-events: none;
+}
+.app_api-request--loading button:hover {
+    background: inherit;
+}
+
+.app_questions,
+.app_answers {
+    padding: 0.5em 1em;
+    border-radius: 10px;
+    border: 1px solid rgba(211, 211, 211, 0.5);
+    max-width: 75%;
+}
+.app_questions {
+    align-self: flex-end;
+    background: azure;
+}
+.app_answers {
+    align-self: flex-start;
+    background: aliceblue;
 }
