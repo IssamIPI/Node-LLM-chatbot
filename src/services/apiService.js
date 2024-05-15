@@ -26,30 +26,26 @@ const safetySettings = [{
 const generativeModelOptions = {
   model: GEMINI_PRO_MODEL_NAME,
   safety_settings: safetySettings,
-  generation_config: { max_output_tokens: 4000 },
+  generation_config: { max_output_tokens: 8000 },
 };
 
 const generativeModel = vertex_ai.preview.getGenerativeModel(generativeModelOptions);
 // The streamGenerateContent function does not need to be an async declaration since it returns a Promise implicitly.
 async function streamGenerateContent(userQuery) {
-    // const request = {
-    //   contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-    // };
+    const request = {
+      contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+    };
 
     try {
-    //   const streamingResp = await generativeModel.generateContentStream(request);
-      //const responseData = [];
-      const chat = generativeModel.startChat({});
-    //   for await (const item of streamingResp.stream) {
-    //     if (item.candidates[0].content.parts && item.candidates[0].content.parts.length > 0) {
-    //       responseData.push(item.candidates[0].content.parts[0].text);
-    //     }
-    //   }
-    const result1 = await chat.sendMessage(userQuery);
-    const responseData = await result1.response.candidates[0].content.parts[0].text;
-      // formatter la réponse retournée de Gemini
-      return responseData
-    //   return responseData.join(' ');
+      const streamingResp = await generativeModel.generateContentStream(request);
+  
+      // Wait for the response stream to complete
+    const aggregatedResponse = await streamingResp.response;
+
+    // Select the text from the response
+    const fullTextResponse = aggregatedResponse.candidates[0].content.parts[0].text;
+    return fullTextResponse
+    
 
     } catch (error) {
       console.error('An error occurred during content generation:', error);
