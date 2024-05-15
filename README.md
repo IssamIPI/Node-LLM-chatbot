@@ -7,8 +7,10 @@
 - npm run main
 
 # Add env variable for GOOGLE credential :
-- Windows OS
+- Windows OS :
+- 
 $env:GOOGLE_APPLICATION_CREDENTIALS="Path-TO-APP\Node-LLM-chatbot\src\services\jwt.keys.json"
 
-- MacOS
+- MacOS :
+- 
 export GOOGLE_APPLICATION_CREDENTIALS="Path-TO-APP\Node-LLM-chatbot\src\services\jwt.keys.json"
