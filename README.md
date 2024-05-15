@@ -4,7 +4,7 @@
 
 # To run the server
 
-- node index.js
+- npm run main
 
 # Add env variable for GOOGLE credential :
 - Windows OS
