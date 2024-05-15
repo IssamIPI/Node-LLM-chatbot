@@ -2,6 +2,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-family: "Londrina Solid", sans-serif;
 }
 
 body {
@@ -88,4 +89,19 @@ body {
 .app_answers {
     align-self: flex-start;
     background: aliceblue;
+}
+
+/*-------*/
+
+pre:has(code) {
+    padding: 1em;
+    margin: 0.5em 0;
+    border-radius: 10px;
+    border: 1px solid lightgrey;
+    background: #f5f5f5;
+}
+
+code {
+    margin: 0.5em 0;
+    white-space: pre-wrap;
 }
