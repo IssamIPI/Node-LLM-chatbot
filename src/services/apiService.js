@@ -45,7 +45,11 @@ async function streamGenerateContent(userQuery) {
           responseData.push(item.candidates[0].content.parts[0].text);
         }
       }
+
+      // formatter la réponse retournée de Gemini
+      responseData.trim('"');
       return responseData.join(',');
+
     } catch (error) {
       console.error('An error occurred during content generation:', error);
       throw new Error('Content generation failed');
@@ -54,7 +58,7 @@ async function streamGenerateContent(userQuery) {
 
 exports.callExternalApi = async (userQuery) => {
   try {
-    
+
     // Invoking the function to start the content generation process.
     return await streamGenerateContent(userQuery);
   } catch (error) {
