@@ -4,14 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const response = await fetch(`/api/example?q=${encodeURIComponent(query)}`);
         const data = await response.json();
-        document.getElementById('data').textContent = JSON.stringify(data);
+        document.getElementById('data').innerHTML = marked.parse(data);
       } catch (error) {
+        console.log(error)
         document.getElementById('data').textContent = 'Error fetching data';
       }
     };
-  
-    // Fetch data with a default query
-    fetchData('How are you doing today?');
+    fetchData('Introduct yourself and ask if i have any questions for you')
   
     // Example to handle a form or button to pass a user query
     const form = document.getElementById('queryForm');
