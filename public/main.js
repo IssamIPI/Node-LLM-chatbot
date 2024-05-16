@@ -2,9 +2,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   const apiForm = document.querySelector('.app_api-request');
 
-  const fetchData = async (query) => {
+  const fetchData = async (query,file) => {
+      const formData = new FormData();
+      formData.append('q', query);
+      if (file) {
+        formData.append('file', file);
+      }
       try {
-        const response = await fetch(`/api/example?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`/api/chatModel`, {
+          method: 'POST',
+          body: formData,
+        });
         const data = await response.json();
 
         let answer = marked.parse(data);
@@ -13,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         document.getElementById('data').textContent = 'Error fetching data';
       }
-    };
+};
     fetchData('Introduce yourself and ask if i have any questions for you')
   
     // Example to handle a form or button to pass a user query
@@ -24,8 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = document.getElementById('queryInput').value;
         document.getElementById('queryInput').value = '';
         apiForm.classList.add('app_api-request--loading');
+        const file = document.getElementById('fileInput').files[0];
         displayAskedQuestion(query);
-        fetchData(query);
+        fetchData(query,file);
       });
     }
   });
