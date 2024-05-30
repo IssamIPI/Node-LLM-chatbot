@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
          
         apiForm.classList.remove('app_api-request--loading');
       } catch (error) {
-        console.log(error)
         document.getElementById('data').textContent = 'Error fetching data';
       }
 };
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = document.getElementById('fileInput').files[0];
         displayAskedQuestion(query);
         fetchData(query,file);
-        
+        document.getElementById('fileInput').value = '';
       });
     }
   });

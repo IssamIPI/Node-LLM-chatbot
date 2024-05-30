@@ -36,21 +36,23 @@ const generativeModelOptions = {
 var chat = null
 const generativeModel = vertex_ai.preview.getGenerativeModel(generativeModelOptions);
 // The streamGenerateContent function does not need to be an async declaration since it returns a Promise implicitly.
-async function getChatResponse(userQuery) {
+async function getChatResponse(userQuery,googleSearchRetrievalTool) {
   
 
     try {
-   
+     
     if(!chat){
-      chat = generativeModel.startChat();
+      chat = generativeModel.startChat({
+        tools: [googleSearchRetrievalTool],
+      });
     }
     const chatInput = userQuery ;
     const result = await chat.sendMessage(chatInput);
     const response = result.response.candidates[0].content.parts[0].text;
       // Convert the response to speech using ElevenLabs TTS
 
-    
-
+    const groundingMetadata = result.response.candidates[0].groundingMetadata;
+  
     return { summary: response };
     } catch (error) {
       console.error('An error occurred during content generation:', error);
@@ -115,7 +117,12 @@ exports.getModelResponse = async (userQuery,file) => {
       return { summary: summary };
       // return summary;
     }
-    const {summary} = await getChatResponse(userQuery)
+    const googleSearchRetrievalTool = {
+      googleSearchRetrieval: {
+        disableAttribution: false,
+      },
+    };
+    const {summary} = await getChatResponse(userQuery,googleSearchRetrievalTool)
    
     // Invoking the function to start the content generation process.
     return { summary: summary};
