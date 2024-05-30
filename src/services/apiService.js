@@ -54,8 +54,16 @@ const generativeModelOptions = {
   safety_settings: safetySettings,
   generation_config: { max_output_tokens: 8000 },
 };
+const intentModelOptions = {
+  model: GEMINI_VERIFICATION_MODEL_NAME,
+  safety_settings: safetySettings,
+  generation_config: {  'maxOutputTokens': 8192,
+  'temperature': 0,
+  'topP': 0.95, },
+};
 var chat = null
 const generativeModel = vertex_ai.preview.getGenerativeModel(generativeModelOptions);
+const intentExtractionModel = vertex_ai.preview.getGenerativeModel(intentModelOptions);
 // The streamGenerateContent function does not need to be an async declaration since it returns a Promise implicitly.
 async function getChatResponse(userQuery,googleSearchRetrievalTool) {
   
@@ -72,9 +80,30 @@ async function getChatResponse(userQuery,googleSearchRetrievalTool) {
     const response = result.response.candidates[0].content.parts[0].text;
       // Convert the response to speech using ElevenLabs TTS
 
-    // const groundingMetadata = result.response.candidates[0].groundingMetadata;
-    const verifiedResponse = await verifyResponse(response);
+     const groundingMetadata = result.response.candidates[0].groundingMetadata;
+    
+     const verifiedResponse = await verifyResponse(response);
     return { summary: verifiedResponse };
+    } catch (error) {
+      console.error('An error occurred during content generation:', error);
+      throw new Error('Content generation failed');
+    }
+  }
+  async function getIntentResponse(userQuery) {
+  
+
+    try {
+     
+   
+      chatIntent = intentExtractionModel.startChat({
+      });
+    
+    const chatInput = userQuery ;
+    const result = await chatIntent.sendMessage(chatInput);
+    const response = result.response.candidates[0].content.parts[0].text;
+
+    // const groundingMetadata = result.response.candidates[0].groundingMetadata;
+    return { summary: response };
     } catch (error) {
       console.error('An error occurred during content generation:', error);
       throw new Error('Content generation failed');
@@ -98,10 +127,10 @@ async function getChatResponse(userQuery,googleSearchRetrievalTool) {
   async function detectYouTubeSummaryIntent(userQuery) {
     const request = {
       role: 'user',
-      parts: [{ text: `Analyze the following query and determine if it requests a YouTube video summary. Extract the YouTube link if present: ${userQuery}` }]
+      parts: [{ text: `Analyze the following query and determine if it requests a YouTube video summary. Extract the YouTube link if present and do not use any comma or quotes in your answer: ${userQuery}` }]
     };
     
-    const {summary}= await getChatResponse(request.parts[0].text);
+    const {summary}= await getIntentResponse(request.parts[0].text);
     return summary;
   }
   async function handleFileUpload(userQuery,filePath, fileType) {
@@ -117,9 +146,8 @@ async function getChatResponse(userQuery,googleSearchRetrievalTool) {
     return summary;
   }
 exports.getModelResponse = async (userQuery,file) => {
-  const audioFileName = `audio_${uuidv4()}.mp3`;
-  const outputPath = path.join(__dirname, '..','..', 'public', 'output', audioFileName); // Path to save the audio file
-  const audioPath = `/output/${audioFileName}`;
+
+
   try {
     if (file) {
       const summary = await handleFileUpload(userQuery,file.path, file.mimetype);
@@ -127,10 +155,13 @@ exports.getModelResponse = async (userQuery,file) => {
       return { summary: summary };
     }
     const intentAnalysis = await detectYouTubeSummaryIntent(userQuery);
+  
     const youtubeLinkMatch = intentAnalysis.match(/(?:https?:\/\/)?(?:(?:(?:www\.?)?youtube\.com(?:\/(?:(?:watch\?.*?(v=[^&\s]+).*)|(?:v(\/.*))|(channel\/.+)|(?:user\/(.+))|(?:results\?(search_query=.+))))?)|(?:youtu\.be(\/.*)?))/i);
-   
+
     if (youtubeLinkMatch) {
       const videoId = youtubeLinkMatch[1].split('v=')[1];
+      console.log(videoId)
+      if(!videoId) return {summary:"You haven't provided any youtube video"}
       const transcript = await getYouTubeTranscript(videoId);
       const summary = await summarizeTranscript(transcript);
      
