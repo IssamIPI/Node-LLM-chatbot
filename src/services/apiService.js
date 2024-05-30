@@ -26,7 +26,24 @@ const safetySettings = [{
   category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
   threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
 }];
+const GEMINI_VERIFICATION_MODEL_NAME = 'gemini-pro';
 
+// Options for the second model
+const verificationModelOptions = {
+  model: GEMINI_VERIFICATION_MODEL_NAME,
+  safety_settings: safetySettings,
+  generation_config: { max_output_tokens: 8000 },
+};
+
+const verificationModel = vertex_ai.preview.getGenerativeModel(verificationModelOptions);
+async function verifyResponse(response) {
+  const verificationChat = verificationModel.startChat();
+  const verificationInput = `Please enhance the following response to ensure it is accurate, coherent, and free of hallucinations: ${response}`;
+  const verificationResult = await verificationChat.sendMessage(verificationInput);
+  const verificationResponse = verificationResult.response.candidates[0].content.parts[0].text;
+
+  return verificationResponse;
+}
 // Instantiate models once outside of functions to avoid repeated initializations.
 const generativeModelOptions = {
   model: GEMINI_PRO_MODEL_NAME,
@@ -51,9 +68,9 @@ async function getChatResponse(userQuery,googleSearchRetrievalTool) {
     const response = result.response.candidates[0].content.parts[0].text;
       // Convert the response to speech using ElevenLabs TTS
 
-    const groundingMetadata = result.response.candidates[0].groundingMetadata;
-  
-    return { summary: response };
+    // const groundingMetadata = result.response.candidates[0].groundingMetadata;
+    const verifiedResponse = await verifyResponse(response);
+    return { summary: verifiedResponse };
     } catch (error) {
       console.error('An error occurred during content generation:', error);
       throw new Error('Content generation failed');

@@ -1,7 +1,8 @@
 // public/main.js
+let currentAudio = null; 
 document.addEventListener('DOMContentLoaded', () => {
   const apiForm = document.querySelector('.app_api-request');
-
+  
   const fetchData = async (query,file) => {
       const formData = new FormData();
       formData.append('q', query);
@@ -60,26 +61,57 @@ function displayReturnedAnswer(data) {
     
     const playButton = document.createElement('button');
       playButton.textContent = 'Play';
-      playButton.addEventListener('click', () => playAudio(data));
+      playButton.addEventListener('click', () => playAudio(playButton,data));
       screen.appendChild(playButton);
   
 }
+const audioCache = {}; 
 
+const playAudio =  async (button, text) => {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    button.textContent = 'Play';
+    currentAudio = null;
+  } else {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
 
-const playAudio = async (text) => {
-  try {
-    const response = await fetch('/api/tts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ text })
-    });
-    const data = await response.json();
+    if (audioCache[text]) {
+      // Use cached audio path if available
+      currentAudio = new Audio(audioCache[text]);
+      currentAudio.play();
+      button.textContent = 'Stop';
 
-    const audio = new Audio(data.audioPath);
-    audio.play();
-  } catch (error) {
-    console.error('Error generating audio:', error);
+      currentAudio.addEventListener('ended', () => {
+        button.textContent = 'Play';
+        currentAudio = null;
+      });
+    } else {
+      try {
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+
+        audioCache[text] = data.audioPath; // Cache the audio path
+        currentAudio = new Audio(data.audioPath);
+        currentAudio.play();
+        button.textContent = 'Stop';
+
+        currentAudio.addEventListener('ended', () => {
+          button.textContent = 'Play';
+          currentAudio = null;
+        });
+      } catch (error) {
+        console.error('Error generating audio:', error);
+      }
+    }
   }
 };
