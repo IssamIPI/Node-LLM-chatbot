@@ -2,10 +2,12 @@
 const axios = require('axios');
 const { VertexAI, HarmCategory, HarmBlockThreshold } = require('@google-cloud/vertexai');
 const { response } = require('../app');
+const path = require('path');
 const { YoutubeTranscript } = require('youtube-transcript');
 const { extractTextFromPDF, extractTextFromDOCX, extractTextFromTXT } = require('./textExtractionService');
 require('dotenv').config();
-
+const { textToSpeech } = require('./elevenLabsService'); 
+const { v4: uuidv4 } = require('uuid');
 // Constants for project and location should be defined at the top level.
 const PROJECT_ID = process.env.PROJECT_ID;
 const LOCATION = 'us-central1';
@@ -16,6 +18,7 @@ const vertex_ai = new VertexAI(vertexAiOptions);
 
 // Define model names as constants to avoid magic strings and improve readability.
 const GEMINI_PRO_MODEL_NAME = 'gemini-1.5-pro-preview-0409';
+const voice = 'XRlny9TzSxQhHzOusWWe'; // Replace with actual voice ID
 
 // Safety settings can be moved outside of the model instantiation,
 // if they are static and reused across multiple instances.
@@ -44,8 +47,11 @@ async function getChatResponse(userQuery) {
     const chatInput = userQuery ;
     const result = await chat.sendMessage(chatInput);
     const response = result.response.candidates[0].content.parts[0].text;
-    return response;
+      // Convert the response to speech using ElevenLabs TTS
 
+    
+
+    return { summary: response };
     } catch (error) {
       console.error('An error occurred during content generation:', error);
       throw new Error('Content generation failed');
@@ -62,8 +68,8 @@ async function getChatResponse(userQuery) {
       parts: [{ text: `Summarize the following transcript: ${transcript}` }]
     };
   
-    const result = await getChatResponse(request.parts[0].text);
-    return result;
+    const {summary} = await getChatResponse(request.parts[0].text);
+    return summary;
   }
   
   async function detectYouTubeSummaryIntent(userQuery) {
@@ -72,8 +78,8 @@ async function getChatResponse(userQuery) {
       parts: [{ text: `Analyze the following query and determine if it requests a YouTube video summary. Extract the YouTube link if present: ${userQuery}` }]
     };
     
-    const result = await getChatResponse(request.parts[0].text);
-    return result;
+    const {summary}= await getChatResponse(request.parts[0].text);
+    return summary;
   }
   async function handleFileUpload(userQuery,filePath, fileType) {
     let text = '';
@@ -84,14 +90,18 @@ async function getChatResponse(userQuery) {
     } else if (fileType === 'text/plain') {
       text = await extractTextFromTXT(filePath);
     }
-    const summary = await getChatResponse(`Answer the user question using the following text: ${text} , here is the user question : ${userQuery}`);
+    const {summary} = await getChatResponse(`Answer the user question using the following text: ${text} , here is the user question : ${userQuery}`);
     return summary;
   }
 exports.getModelResponse = async (userQuery,file) => {
+  const audioFileName = `audio_${uuidv4()}.mp3`;
+  const outputPath = path.join(__dirname, '..','..', 'public', 'output', audioFileName); // Path to save the audio file
+  const audioPath = `/output/${audioFileName}`;
   try {
     if (file) {
       const summary = await handleFileUpload(userQuery,file.path, file.mimetype);
-      return summary;
+     
+      return { summary: summary };
     }
     const intentAnalysis = await detectYouTubeSummaryIntent(userQuery);
     const youtubeLinkMatch = intentAnalysis.match(/(?:https?:\/\/)?(?:(?:(?:www\.?)?youtube\.com(?:\/(?:(?:watch\?.*?(v=[^&\s]+).*)|(?:v(\/.*))|(channel\/.+)|(?:user\/(.+))|(?:results\?(search_query=.+))))?)|(?:youtu\.be(\/.*)?))/i);
@@ -100,10 +110,15 @@ exports.getModelResponse = async (userQuery,file) => {
       const videoId = youtubeLinkMatch[1].split('v=')[1];
       const transcript = await getYouTubeTranscript(videoId);
       const summary = await summarizeTranscript(transcript);
-      return summary;
+     
+
+      return { summary: summary };
+      // return summary;
     }
+    const {summary} = await getChatResponse(userQuery)
+   
     // Invoking the function to start the content generation process.
-    return await getChatResponse(userQuery);
+    return { summary: summary};
   } catch (error) {
     throw new Error(`Error in callExternalApi: ${error.message}`);
   }

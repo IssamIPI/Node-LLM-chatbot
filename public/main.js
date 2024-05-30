@@ -15,10 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await response.json();
 
-        let answer = marked.parse(data);
+        let answer = marked.parse(data.summary);
         displayReturnedAnswer(answer);
+         
         apiForm.classList.remove('app_api-request--loading');
       } catch (error) {
+        console.log(error)
         document.getElementById('data').textContent = 'Error fetching data';
       }
 };
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = document.getElementById('fileInput').files[0];
         displayAskedQuestion(query);
         fetchData(query,file);
+        
       });
     }
   });
@@ -53,4 +56,31 @@ function displayReturnedAnswer(data) {
   lineAnswer.classList.add('app_answers');
   lineAnswer.innerHTML = data;
   screen.appendChild(lineAnswer);
+  // Check if audio file is available and create an audio element
+  
+    
+    const playButton = document.createElement('button');
+      playButton.textContent = 'Play';
+      playButton.addEventListener('click', () => playAudio(data));
+      screen.appendChild(playButton);
+  
 }
+
+
+const playAudio = async (text) => {
+  try {
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text })
+    });
+    const data = await response.json();
+
+    const audio = new Audio(data.audioPath);
+    audio.play();
+  } catch (error) {
+    console.error('Error generating audio:', error);
+  }
+};

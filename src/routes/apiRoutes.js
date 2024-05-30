@@ -7,6 +7,6 @@ const upload = require('../services/fileService');
 router.post('/chatModel', upload, apiController.chatModel);
 
 router.get('/youtubeIntent',apiController.determineYoutubeIntent)
-
+router.post('/tts', apiController.textToSpeech);
 
 module.exports = router;
