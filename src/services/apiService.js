@@ -26,19 +26,23 @@ const safetySettings = [{
   category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
   threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
 }];
-const GEMINI_VERIFICATION_MODEL_NAME = 'gemini-pro';
+const GEMINI_VERIFICATION_MODEL_NAME = 'gemini-1.5-flash-001';
 
 // Options for the second model
 const verificationModelOptions = {
   model: GEMINI_VERIFICATION_MODEL_NAME,
   safety_settings: safetySettings,
-  generation_config: { max_output_tokens: 8000 },
+  generation_config: {  'maxOutputTokens': 8192,
+  'temperature': 0,
+  'topP': 0.95, },
 };
 
 const verificationModel = vertex_ai.preview.getGenerativeModel(verificationModelOptions);
 async function verifyResponse(response) {
-  const verificationChat = verificationModel.startChat();
-  const verificationInput = `Please enhance the following response to ensure it is accurate, coherent, and free of hallucinations: ${response}`;
+  const verificationChat = verificationModel.startChat({
+    system_instruction: "Enhance the following response for accuracy, coherence, and eliminate any hallucinations. Do not mention that this response has been verified or enhanced, If the following response is accurate enough return it without any modifications"
+  });
+  const verificationInput = `Enhance the following response for accuracy, coherence, and eliminate any hallucinations. Do not mention that this response has been verified or enhanced, If the following response is accurate enough return it without any modifications: "${response}"`;
   const verificationResult = await verificationChat.sendMessage(verificationInput);
   const verificationResponse = verificationResult.response.candidates[0].content.parts[0].text;
 
